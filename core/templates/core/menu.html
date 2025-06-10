@@ -1,0 +1,23 @@
+{% extends "core/base.html" %}
+
+{% block title %}Menu - Restaurant POS{% endblock %}
+
+{% block content %}
+<h1>Our Menu</h1>
+{% if menu_items %}
+    {% regroup menu_items by category as category_list %}
+    {% for category_group in category_list %}
+        <h2>{{ category_group.grouper|capfirst }}</h2>
+        <ul>
+            {% for item in category_group.list %}
+                <li>
+                    <strong>{{ item.name }}</strong> - \${{ item.price }}
+                    {% if item.description %}<p><small>{{ item.description }}</small></p>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+{% else %}
+    <p>No menu items available at the moment. Please check back later or inform the staff.</p>
+{% endif %}
+{% endblock %}
