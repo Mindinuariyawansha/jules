@@ -1,0 +1,87 @@
+{% extends "core/base.html" %}
+
+{% block title %}Order #{{ order.id }} - Restaurant POS{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between;">
+    <div style="width: 48%;">
+        <h2>Menu Items</h2>
+        {% if menu_items %}
+            {% regroup menu_items by category as category_list %}
+            {% for category_group in category_list %}
+                <h3>{{ category_group.grouper|capfirst }}</h3>
+                <ul style="list-style: none; padding-left: 0;">
+                    {% for item in category_group.list %}
+                    <li style="margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 4px;">
+                        <strong>{{ item.name }}</strong> - \${{ item.price }}
+                        <form action="{% url 'core:add_item_to_order' order_id=order.id menu_item_id=item.id %}" method="post" style="display: inline; margin-left: 10px;">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" value="1" min="1" class="form-control" style="width: 60px; display: inline-block;">
+                            <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% endfor %}
+        {% else %}
+            <p>No menu items available.</p>
+        {% endif %}
+    </div>
+
+    <div style="width: 48%;">
+        <h2>Order #{{ order.id }} Details</h2>
+        <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+        <p><strong>Total Amount:</strong> \${{ order.total_amount|floatformat:2 }}</p>
+
+        <h3>Items in Order:</h3>
+        {% if order.orderitem_set.all %}
+            <table style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Subtotal</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.orderitem_set.all %}
+                    <tr>
+                        <td>{{ item.menu_item.name }}</td>
+                        <td>
+                            <form action="{% url 'core:update_order_item_quantity' item.id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="number" name="quantity" value="{{ item.quantity }}" min="0" class="form-control" style="width: 60px;">
+                                <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+                            </form>
+                        </td>
+                        <td>\${{ item.menu_item.price|floatformat:2 }}</td>
+                        <td>\${{ item.subtotal|floatformat:2 }}</td>
+                        <td>
+                            <form action="{% url 'core:remove_item_from_order' item.id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No items in this order yet. Add items from the menu.</p>
+        {% endif %}
+
+        <h3>Update Order Status:</h3>
+        <form action="{% url 'core:update_order_status' order.id %}" method="post">
+            {% csrf_token %}
+            <select name="status" class="form-control">
+                {% for status_val, status_display in all_status_choices %}
+                <option value="{{ status_val }}" {% if order.status == status_val %}selected{% endif %}>{{ status_display }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Update Status</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "core/base.html" %}
+
+{% block title %}Orders - Restaurant POS{% endblock %}
+
+{% block content %}
+<h1>Current Orders</h1>
+<form action="{% url 'core:create_new_order' %}" method="post" style="margin-bottom: 20px;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Create New Order</button>
+</form>
+
+{% if orders %}
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Total Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.timestamp|date:"Y-m-d H:i" }}</td>
+                <td>{{ order.get_status_display }}</td>
+                <td>\${{ order.total_amount|floatformat:2 }}</td>
+                <td><a href="{% url 'core:view_order' order.id %}" class="btn btn-secondary btn-sm">View/Edit</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No orders found.</p>
+{% endif %}
+{% endblock %}
